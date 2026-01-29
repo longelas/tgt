@@ -121,6 +121,13 @@ jobs:
           echo "LOCAL_TDLIB_PATH=$(pwd)/tdlib" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=$(pwd)/tdlib/lib" >> $GITHUB_ENV
 
+      # dyld looks in target/debug/deps first; put dylib there so build script finds it (macOS ignores DYLD_LIBRARY_PATH in some contexts)
+      - name: Place TDLib dylib in target/debug/deps (macOS)
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        run: |
+          mkdir -p target/debug/deps
+          cp -f tdlib/lib/libtdjson.*.dylib target/debug/deps/
+
       - name: Cargo and rustc versions
         run: |
           cargo --version
