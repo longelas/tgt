@@ -132,10 +132,14 @@ jobs:
           cargo build --no-default-features --verbose --features ${{ matrix.feature }}
 
       - name: Run cargo test
-        run: cargo test --no-default-features --verbose --features ${{ matrix.feature }} -- --nocapture --test-threads=1
+        run: |
+          if [ -d "tdlib/lib" ]; then export DYLD_LIBRARY_PATH="$(pwd)/tdlib/lib"; fi
+          cargo test --no-default-features --verbose --features ${{ matrix.feature }} -- --nocapture --test-threads=1
 
       - name: Run cargo clippy
-        run: cargo clippy --no-default-features --all-targets --features ${{ matrix.feature }} -- -D warnings
+        run: |
+          if [ -d "tdlib/lib" ]; then export DYLD_LIBRARY_PATH="$(pwd)/tdlib/lib"; fi
+          cargo clippy --no-default-features --all-targets --features ${{ matrix.feature }} -- -D warnings
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
