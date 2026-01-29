@@ -48,7 +48,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: td/
-          key: ${{ runner.os }}-${{ runner.arch }}-TDLib-${{ env.TDLIB_VERSION }}
+          key: ${{ runner.os }}-${{ runner.arch }}-TDLib-${{ env.TDLIB_VERSION }}-v2
 
       - name: Build TDLib
         if: steps.cache-tdlib-restore.outputs.cache-hit != 'true' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config')
@@ -106,6 +106,8 @@ jobs:
         run: |
           sudo mkdir -p /usr/local/lib
           sudo cp -f tdlib/lib/libtdjson.*.dylib /usr/local/lib/
+          ls -la tdlib/lib/libtdjson*.dylib
+          ls -la /usr/local/lib/libtdjson*.dylib || true
 
       - name: Set PKG_CONFIG_PATH and DYLD_LIBRARY_PATH
         if: matrix.feature == 'pkg-config'
@@ -125,7 +127,9 @@ jobs:
           rustc --version
 
       - name: Run cargo build
-        run: cargo build --no-default-features --verbose --features ${{ matrix.feature }}
+        run: |
+          if [ -d "tdlib/lib" ]; then export DYLD_LIBRARY_PATH="$(pwd)/tdlib/lib"; fi
+          cargo build --no-default-features --verbose --features ${{ matrix.feature }}
 
       - name: Run cargo test
         run: cargo test --no-default-features --verbose --features ${{ matrix.feature }} -- --nocapture --test-threads=1
