@@ -106,10 +106,11 @@ jobs:
           echo "PKG_CONFIG_PATH=$(pwd)/tdlib/lib/pkgconfig" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=$(pwd)/tdlib/lib" >> $GITHUB_ENV
 
-      - name: Set LOCAL_TDLIB_PATH
+      - name: Set LOCAL_TDLIB_PATH and DYLD_LIBRARY_PATH
         if: matrix.feature == 'local-tdlib'
         run: |
           echo "LOCAL_TDLIB_PATH=$(pwd)/tdlib" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$(pwd)/tdlib/lib" >> $GITHUB_ENV
 
       - name: Cargo and rustc versions
         run: |
