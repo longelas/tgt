@@ -100,6 +100,13 @@ jobs:
             install_name_tool -id "@rpath/$(basename "$lib")" "$lib"
           done
 
+      # Install dylib into /usr/local/lib so build script (and dyld) can find it at runtime
+      - name: Install TDLib dylib to /usr/local/lib (macOS)
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        run: |
+          sudo mkdir -p /usr/local/lib
+          sudo cp -f tdlib/lib/libtdjson.*.dylib /usr/local/lib/
+
       - name: Set PKG_CONFIG_PATH and DYLD_LIBRARY_PATH
         if: matrix.feature == 'pkg-config'
         run: |
