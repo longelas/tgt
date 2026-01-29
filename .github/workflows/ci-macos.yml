@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Restore cache TDLib
-        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib'
         id: cache-tdlib-restore
         uses: actions/cache/restore@v5
         with:
@@ -51,7 +51,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-TDLib-${{ env.TDLIB_VERSION }}-v2
 
       - name: Build TDLib
-        if: steps.cache-tdlib-restore.outputs.cache-hit != 'true' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config')
+        if: steps.cache-tdlib-restore.outputs.cache-hit != 'true' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib')
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew install gperf openssl
@@ -70,31 +70,31 @@ jobs:
           cmake --build . --target install
 
       - name: Save cache TDLib
-        if: steps.cache-tdlib-restore.outputs.cache-hit != 'true' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config')
+        if: steps.cache-tdlib-restore.outputs.cache-hit != 'true' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib')
         uses: actions/cache/save@v5
         with:
           path: td/
           key: ${{ steps.cache-tdlib-restore.outputs.cache-primary-key }}
 
       - name: Extract TDLib x86_64
-        if: runner.arch == 'x64' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config')
+        if: runner.arch == 'x64' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib')
         run: |
           cp -r ./td/tdlib ./
 
       - name: Extract TDLib ARM64
-        if: runner.arch == 'ARM64' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config')
+        if: runner.arch == 'ARM64' && (matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib')
         run: |
           cp -r ./td/tdlib ./
        
       - name: Fix TDLib permissions (files + directories)
-        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib'
         run: |
           sudo chown -R "$(id -u):$(id -g)" tdlib
           chmod -R u+rwX tdlib
 
       # 🔧 FIX: rewrite TDLib install_name so it does NOT point at /usr/lib
       - name: Fix TDLib install_name (macOS)
-        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib'
         run: |
           for lib in tdlib/lib/libtdjson*.dylib; do
             install_name_tool -id "@rpath/$(basename "$lib")" "$lib"
@@ -102,7 +102,7 @@ jobs:
 
       # Install dylib into /usr/local/lib so build script (and dyld) can find it at runtime
       - name: Install TDLib dylib to /usr/local/lib (macOS)
-        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib'
         run: |
           sudo mkdir -p /usr/local/lib
           sudo cp -f tdlib/lib/libtdjson.*.dylib /usr/local/lib/
@@ -121,9 +121,9 @@ jobs:
           echo "LOCAL_TDLIB_PATH=$(pwd)/tdlib" >> $GITHUB_ENV
           echo "DYLD_LIBRARY_PATH=$(pwd)/tdlib/lib" >> $GITHUB_ENV
 
-      # dyld looks in target/debug/deps first; put dylib there so build script finds it (macOS ignores DYLD_LIBRARY_PATH in some contexts)
+      # dyld looks in target/debug/deps first; put dylib there so build script finds it (macOS ignores DYLD_LIBRARY_PATH in some contexts). For download-tdlib we bootstrap with our TDLib build so the build script can run; it then downloads its own copy for the app.
       - name: Place TDLib dylib in target/debug/deps (macOS)
-        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config'
+        if: matrix.feature == 'local-tdlib' || matrix.feature == 'pkg-config' || matrix.feature == 'download-tdlib'
         run: |
           mkdir -p target/debug/deps
           cp -f tdlib/lib/libtdjson.*.dylib target/debug/deps/
