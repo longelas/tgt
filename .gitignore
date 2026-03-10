@@ -18,3 +18,7 @@ result
 .autopilot.json
 .cursor/rules/after_each_chat.mdc
 /tmp/*
+
+# Specstory history and Cursor indexing
+.specstory/
+.cursorindexingignore
